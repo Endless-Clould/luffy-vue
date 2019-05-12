@@ -4,6 +4,7 @@ import home from '@/components/home'
 import Course from '@/components/Course'
 import Cart from '@/components/Cart'
 import Detail from "@/components/Detail"
+import Login from "@/components/login"
 
 Vue.use(Router)
 
@@ -29,7 +30,12 @@ export default new Router({
       name: "Detail",
       path: "/detail",
       component: Detail,
-    }
+    },
+    {
+      name: "Login",
+      path: "/login",
+      component: Login,
+    },
 
   ]
 })

@@ -9,23 +9,9 @@
             </a>
           </el-col>
           <el-col class="nav" :span="16">
-            <el-row>
-              <el-col :span="3" >
-                <router-link to="Course" class="current">免费课</router-link>
-              </el-col>
-              <el-col :span="3">
-                <router-link to="/">轻课</router-link>
-              </el-col>
-              <el-col :span="3">
-                <router-link to="/">学位课</router-link>
-              </el-col>
-              <el-col :span="3">
-                <router-link to="/">题库</router-link>
-              </el-col>
-              <el-col :span="3">
-                <router-link to="/">教育</router-link>
-              </el-col>
-            </el-row>
+              <el-row>
+                <el-col v-for="nav in nav_list" :span="3"><a :class="check(nav.link)?'current':''" :href="nav.link">{{nav.name}}</a></el-col>
+              </el-row>
           </el-col>
           <el-col class="login-bar" :span="5">
             <el-row v-if="token">
@@ -33,65 +19,68 @@
                 <router-link to="">
                   <b class="goods-number">0</b>
                   <img class="cart-icon" src="@/assets/cart.svg" alt="">
-                  <span>购物车</span>
+                  <span><router-link to="/cart">购物车</router-link></span>
                 </router-link>
               </el-col>
-              <el-col class="study" :span="8" :offset="2">
-                <router-link to="">学习中心</router-link>
-              </el-col>
+              <el-col class="study" :span="8" :offset="2"><router-link to="">学习中心</router-link></el-col>
               <el-col class="member" :span="5">
-                <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+                <el-menu class="el-menu-demo" mode="horizontal">
                   <el-submenu index="2">
-                    <template slot="title"><router-link to="">
-                      <img src="@/assets/logo@2x.png" alt="">
-
-                    </router-link></template>
+                    <template slot="title"><router-link to=""><img src="@/assets/logo@2x.png" alt=""></router-link></template>
                     <el-menu-item index="2-1">我的账户</el-menu-item>
                     <el-menu-item index="2-2">我的订单</el-menu-item>
-                    <el-menu-item index="2-3">我的优惠券</el-menu-item>
-                    <el-menu-item index="2-4">退出登录</el-menu-item>
-
+                    <el-menu-item index="2-3">我的优惠卷</el-menu-item>
+                    <el-menu-item index="2-3">退出登录</el-menu-item>
                   </el-submenu>
                 </el-menu>
               </el-col>
             </el-row>
             <el-row v-else>
               <el-col class="cart-ico" :span="9">
-                <router-link to="/cart">
+                <router-link to="">
                   <img class="cart-icon" src="@/assets/cart.svg" alt="">
-                  <span>购物车</span>
+                  <span><router-link to="/cart">购物车</router-link></span>
                 </router-link>
               </el-col>
               <el-col :span="10" :offset="5">
                 <span class="register">
-                  <router-link to="/login">登录</router-link>
+                  <router-link to="Login" >登录</router-link>
                   &nbsp;&nbsp;|&nbsp;&nbsp;
                   <router-link to="/register">注册</router-link>
                 </span>
               </el-col>
-
-
-
-
-
             </el-row>
           </el-col>
         </el-row>
       </el-header>
-
     </el-container>
   </div>
 </template>
 
 <script>
   export default {
-    name: 'Header',
-    data () {
+    name: "Header",
+    data(){
       return {
-        token: false
+        // 设置一个登录标识，表示是否登录
+        token: false,
+        nav_list:[],
+      };
+    },
+    created() {
+      // 获取导航
+      this.$axios.get('http://127.0.0.1:8000/api/nav/').then(response=>{
+        this.nav_list = response.data
+        console.log(this.nav_list)
+      }).catch(error=>{
+        console.log(error.response)
+      })
+    },
+    methods:{
+      check(link){
+          return link==window.location.pathname
       }
     }
-
   }
 </script>
 
@@ -127,15 +116,17 @@
   }
 
   .nav .el-col a{
-    display: block;
+    display: inline-block;
     text-align: center;
     padding-bottom: 16px;
     padding-left: 5px;
     padding-right: 5px;
     position: relative;
     font-size: 16px;
+    margin-left: 20px;
   }
-    .nav .el-col .current{
+
+  .nav .el-col .current{
     color: #4a4a4a;
     border-bottom: 4px solid #ffc210;
   }
@@ -181,6 +172,5 @@
   .member img:hover{
     border: 1px solid yellow;
   }
-
 
 </style>
