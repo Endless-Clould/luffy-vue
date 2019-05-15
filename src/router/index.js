@@ -5,6 +5,7 @@ import Course from '@/components/Course'
 import Cart from '@/components/Cart'
 import Detail from "@/components/Detail"
 import Login from "@/components/login"
+import Register from "../components/Register"
 
 Vue.use(Router)
 
@@ -36,6 +37,11 @@ export default new Router({
       path: "/login",
       component: Login,
     },
+     {
+      name:"Register",
+      path: "/register",
+      component:Register,
+    }
 
   ]
 })

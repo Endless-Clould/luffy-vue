@@ -23,14 +23,14 @@
             <p>忘记密码</p>
           </div>
           <button class="login_btn" @click="loginhander">登录</button>
-          <p class="go_login">没有账号 <span>立即注册</span></p>
+          <p class="go_login" >没有账号 <router-link to="/register">立即注册</router-link></p>
         </div>
         <div class="inp" v-show="login_type==1">
           <input v-model="username" type="text" placeholder="手机号码" class="user">
           <input v-model="password" type="text" class="pwd" placeholder="短信验证码">
           <button id="get_code">获取验证码</button>
-          <button class="login_btn">登录</button>
-          <p class="go_login">没有账号 <span>立即注册</span></p>
+          <button class="login_btn" >登录</button>
+          <p class="go_login" >没有账号 <router-link to="/register">立即注册</router-link></p>
         </div>
       </div>
     </div>
@@ -46,33 +46,87 @@
         remember: false, // 记住密码
         username: "",
         password: "",
+        remember: "",
+        is_geek:false,
+
       }
     },
+    mounted() {
+      // 请求后端获取生成验证码的流水号
+      this.$axios.get('http://127.0.0.1:8000/users/captcha/', {
+        responseType: 'json', // 希望返回json数据
+      }).then(response => {
+        let data = response.data;
+        console.log(data)
 
+        // 验证初始化配置
+        initGeetest({
+          gt: data.gt,
+          challenge: data.challenge,
+          product: "popup", // 产品形式，包括：float，embed，popup。注意只对PC版验证码有效
+          offline: !data.success
+        }, this.handlerPopup)
+      }).catch(error => {
+        console.log(error.response);
+      });
+    },
     methods: {
-loginhander(){
-      this.$axios.post(this.$settings.Host+"/users/login/",{"username":this.username,"password":this.password}).then(response=>{
-        console.log(response.data)
-        	// 使用浏览器本地存储保存token
-   if (this.remember) {
-    // 记住登录
-    sessionStorage.clear();
-    localStorage.token = response.data.token;
-    localStorage.id = response.data.id;
-    localStorage.username = response.data.username;
-  } else {
-    // 未记住登录
-    localStorage.clear();
-    sessionStorage.token = response.data.token;
-    sessionStorage.id = response.data.id;
-    sessionStorage.username = response.data.username;
-  }
-	// 页面跳转回到上一个页面 也可以使用 this.$router.push("/") 回到首页
-	this.$router.go(-1)
-      }).catch(error=>{
-        console.log(error)
-      })
-    }
+      loginhander() {
+         // 判断用户是否已经通过了极验验证
+      if(!this.is_geek){
+        return false;
+      }
+        this.$axios.post('http://127.0.0.1:8000/users/login/', {
+          "username": this.username,
+          "password": this.password
+        }).then(response => {
+          console.log(response.data)
+          // 使用浏览器本地存储保存token
+               let data = response.data
+          if (this.remember) {
+            // 记住登录
+            sessionStorage.clear();
+            localStorage.token =data.token;
+            localStorage.id = data.id;
+            localStorage.username = data.username;
+          } else {
+            // 未记住登录
+            localStorage.clear();
+            sessionStorage.token =data.token;
+            sessionStorage.id =data.id;
+            sessionStorage.username =data.username;
+          }
+          // 页面跳转回到上一个页面 也可以使用 this.$router.push("/") 回到首页
+          this.$router.go(-1)
+        }).catch(error => {
+          console.log(error)
+        })
+      },
+      handlerPopup(captchaObj) {
+        // 把验证码添加到模板中制定的页面
+        captchaObj.appendTo("#geetest1");
+      let _this = this;
+
+       // 监听用户对于验证码的操作是否成功了
+       captchaObj.onSuccess(()=>{
+          var validate = captchaObj.getValidate();
+          console.log(validate)
+
+          _this.$axios.post("http://127.0.0.1:8000/users/captcha/",{
+              geetest_challenge: validate.geetest_challenge,
+              geetest_validate: validate.geetest_validate,
+              geetest_seccode: validate.geetest_seccode
+          }).then(response=>{
+              // 在用户成功添加数据以后,可以允许点击登录按钮
+              _this.is_geek = true;
+
+          }).catch(error=>{
+              console.log(error.response)
+          })
+
+        });
+
+      },
 
     },
 

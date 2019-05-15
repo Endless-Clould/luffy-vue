@@ -5,6 +5,7 @@ import App from './App'
 import router from './router'
 import ElementUI from 'element-ui';
 import axios from 'axios';
+import '../static/globals/gt.js'
 import 'element-ui/lib/theme-chalk/index.css';
 require('video.js/dist/video-js.css');
 require('vue-video-player/src/custom-theme.css');
