@@ -1,211 +1,160 @@
 <template>
   <div class="course">
-    <Header></Header>
+    <Header/>
     <div class="main">
       <!-- 筛选功能 -->
       <div class="top">
         <ul class="condition condition1">
           <li class="cate-condition">课程分类:</li>
-          <li class="item current">全部</li>
-          <li class="item">Python</li>
-          <li class="item">Linux运维</li>
-          <li class="item">Python进阶</li>
-          <li class="item">开发工具</li>
-          <li class="item">Go语言</li>
-          <li class="item">机器学习</li>
-          <li class="item">技术生涯</li>
+          <li class="item" :class="query_params.course_category==0?'current':''" @click="query_params.course_category=0">全部</li>
+          <li :class="query_params.course_category==catetory.id?'current':''" @click="query_params.course_category=catetory.id" v-for="catetory in catetory_list" :data-key="catetory.id" class="item">{{catetory.name}}</li>
         </ul>
         <ul class="condition condition2">
           <li class="cate-condition">筛&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;选:</li>
-          <li class="item current">默认</li>
-          <li class="item">人气</li>
-          <li class="item price">价格</li>
+          <li class="item" :class="(query_params.ordering=='-id' || query_params.ordering=='id')?'current':''" @click="select_ordering('id')">默认</li>
+          <li class="item" :class="(query_params.ordering=='-students' || query_params.ordering=='students')?'current':''" @click="select_ordering('students')">人气</li>
+          <li class="item" :class="query_params.ordering=='price'?'current price':(query_params.ordering=='-price'?'current price2':'')" @click="select_ordering('price')">价格</li>
           <li class="course-length">共21个课程</li>
         </ul>
       </div>
       <!-- 课程列表 --->
       <div class="list">
         <ul>
-          <li class="course-item">
-            <router-link to="/detail" class="course-link">
+          <li class="course-item" v-for="course in course_list">
+            <router-link :to="{path: '/detail',query:{id:course.id}}" class="course-link">
               <div class="course-cover">
-                <img src="../../static/course/1544059695.jpeg" alt="">
+                <img :src="course.course_img" alt="">
               </div>
               <div class="course-info">
                 <div class="course-title">
-                  <h3>Python开发21天入门</h3>
-                  <span>46520人已加入学习</span>
+                  <h3>{{course.name}}</h3>
+                  <span>{{course.students}}人已加入学习</span>
                 </div>
                 <p class="teacher">
-                  <span class="info">Alex 金角大王 老男孩Python教学总监</span>
-                  <span class="lesson">共154课时/更新完成</span>
+                  <span class="info">{{course.teacher.name}} {{course.teacher.title}}</span>
+                  <span class="lesson">共{{course.lessons}}课时/{{course.lessons==course.pub_lessons?'更新完成':('已更新'+course.pub_lessons+"课时")}}</span>
                 </p>
                 <ul class="lesson-list">
-                  <li>
-                    <p class="lesson-title">01 | 常用模块学习-模块的种类和导入方法</p>
-                    <span class="free">免费</span>
+                  <li v-for="lesson,key in course.lesson_list">
+                    <p class="lesson-title">0{{key+1}} | {{lesson.name}}</p>
+                    <span v-if="lesson.free_trail" class="free">免费</span>
                   </li>
-                  <li>
-                    <p class="lesson-title">02 | 编程语言介绍（三）高级语言</p>
-                    <span class="free">免费</span>
-                  </li>
-                  <li>
-                    <p class="lesson-title">03 | 编程语言介绍（一）</p>
-                    <span class="free">免费</span>
-                  </li>
-                  <li>
-                    <p class="lesson-title">04 | 课程介绍（二）-Python与其他语言的区别</p>
-                    <span class="free">免费</span>
-                  </li>
+
                 </ul>
                 <div class="buy-info">
                   <span class="discount">限时免费</span>
                   <span class="present-price">￥0.00元</span>
-                  <span class="original-price">原价：9.00元</span>
+                  <span class="original-price">原价：{{course.price}}元</span>
                   <button class="buy-now">立即购买</button>
                 </div>
               </div>
             </router-link>
           </li>
-          <li class="course-item">
-            <div class="course-cover">
-              <img src="../../static/course/1544059695.jpeg" alt="">
-            </div>
-            <div class="course-info">
-              <div class="course-title">
-                <h3>Python开发21天入门</h3>
-                <span>46520人已加入学习</span>
-              </div>
-              <p class="teacher">
-                <span class="info">Alex 金角大王 老男孩Python教学总监</span>
-                <span class="lesson">共154课时/更新完成</span>
-              </p>
-              <ul class="lesson-list">
-                <li>
-                  <p class="lesson-title">01 | 常用模块学习-模块的种类和导入方法</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">02 | 编程语言介绍（三）高级语言</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">03 | 编程语言介绍（一）</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">04 | 课程介绍（二）-Python与其他语言的区别</p>
-                  <span class="free">免费</span>
-                </li>
-              </ul>
-              <div class="buy-info">
-                <span class="discount">限时免费</span>
-                <span class="present-price">￥0.00元</span>
-                <span class="original-price">原价：9.00元</span>
-                <button class="buy-now">立即购买</button>
-              </div>
-            </div>
-          </li>
-          <li class="course-item">
-            <div class="course-cover">
-              <img src="../../static/course/1544059695.jpeg" alt="">
-            </div>
-            <div class="course-info">
-              <div class="course-title">
-                <h3>Python开发21天入门</h3>
-                <span>46520人已加入学习</span>
-              </div>
-              <p class="teacher">
-                <span class="info">Alex 金角大王 老男孩Python教学总监</span>
-                <span class="lesson">共154课时/更新完成</span>
-              </p>
-              <ul class="lesson-list">
-                <li>
-                  <p class="lesson-title">01 | 常用模块学习-模块的种类和导入方法</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">02 | 编程语言介绍（三）高级语言</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">03 | 编程语言介绍（一）</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">04 | 课程介绍（二）-Python与其他语言的区别</p>
-                  <span class="free">免费</span>
-                </li>
-              </ul>
-              <div class="buy-info">
-                <span class="discount">限时免费</span>
-                <span class="present-price">￥0.00元</span>
-                <span class="original-price">原价：9.00元</span>
-                <button class="buy-now">立即购买</button>
-              </div>
-            </div>
-          </li>
-          <li class="course-item">
-            <div class="course-cover">
-              <img src="../../static/course/1544059695.jpeg" alt="">
-            </div>
-            <div class="course-info">
-              <div class="course-title">
-                <h3>Python开发21天入门</h3>
-                <span>46520人已加入学习</span>
-              </div>
-              <p class="teacher">
-                <span class="info">Alex 金角大王 老男孩Python教学总监</span>
-                <span class="lesson">共154课时/更新完成</span>
-              </p>
-              <ul class="lesson-list">
-                <li>
-                  <p class="lesson-title">01 | 常用模块学习-模块的种类和导入方法</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">02 | 编程语言介绍（三）高级语言</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">03 | 编程语言介绍（一）</p>
-                  <span class="free">免费</span>
-                </li>
-                <li>
-                  <p class="lesson-title">04 | 课程介绍（二）-Python与其他语言的区别</p>
-                  <span class="free">免费</span>
-                </li>
-              </ul>
-              <div class="buy-info">
-                <span class="discount">限时免费</span>
-                <span class="present-price">￥0.00元</span>
-                <span class="original-price">原价：9.00元</span>
-                <button class="buy-now">立即购买</button>
-              </div>
-            </div>
-          </li>
         </ul>
       </div>
+      <div class="pagination">
+        <el-pagination
+          @current-change="handleCurrentChange"
+          :current-page="query_params.current_page"
+          background
+          layout="prev, pager, next"
+          :page-size="2"
+          :total="course_count">
+        </el-pagination>
+      </div>
     </div>
-    <Footer></Footer>
+    <Footer/>
   </div>
 </template>
 
 <script>
-  import Header from "./common/Header"
-  import Footer from "./common/Footer"
+import Header from "./common/Header"
+import Footer from "./common/Footer"
+export default {
+  name: "Course",
+  data(){
+    return {
+      catetory_list:[],
+      course_list:[],
+      course_count: 0,
+      course_page_size:1,
+      query_params:{
+        course_category: 0,
+        ordering:"-id",
+        current_page: 1,
+      }
+    }
+  },
+  watch:{
+    // 每次点击不同课程时,要重新获取课程列表
+    "query_params.course_category":function(){
+       this.get_course_list();
+       // 当切换分类的时候,重置页码
+       this.query_params.current_page = 1;
+    },
+    "query_params.ordering":function(){
+       // 当切换排序条件的时候,重置页码
+       // this.query_params.current_page = 1;
+       this.get_course_list();
+    },
+    "query_params.current_page":function(){
+       this.get_course_list();
+    }
+  },
+  components: {Header, Footer},
+  created(){
+    // 获取课程分类
+    this.$axios.get(this.$settings.Host+"/courses/cate/").then(response=>{
+      this.catetory_list = response.data
+    }).catch(error=>{
+      console.log(error.response)
+    });
 
-  export default {
-    name: "Course",
-    components: {
-      Header,
-      Footer
+    // 获取课程信息
+    this.get_course_list()
+
+  },
+  methods:{
+    select_ordering(selector){
+      // 默认排序
+      if(this.query_params.ordering==('-'+selector) ){
+        this.query_params.ordering = selector;
+      }else{
+        this.query_params.ordering = '-'+selector;
+      }
+    },
+    get_course_list(){
+      let query_params = {
+        ordering:this.query_params.ordering,
+        page:this.query_params.current_page,
+      };
+
+      if( this.query_params.course_category != 0 ){
+        query_params.course_category = this.query_params.course_category;
+      }
+
+      this.$axios.get(this.$settings.Host+"/courses/list/",{
+        params: query_params
+      }).then(response=>{
+        // 课程列表
+        this.course_list = response.data.results;
+        // 课程总数量
+        this.course_count = response.data.count;
+
+      }).catch(error=>{
+        console.log(error.response)
+      });
+    },
+    handleCurrentChange(page){
+      // 页码发生改变
+      this.query_params.current_page = page;
     }
   }
+}
 </script>
 
 <style scoped>
- .main{
+.main{
     width: 1100px;
     height: auto;
     margin: 0 auto;
@@ -238,6 +187,7 @@
     margin-left: 14px;
     position: relative;
     transition: all .3s ease;
+    border:1px solid transparent; /*  transparent 透明 */
     cursor: pointer;
     color: #4a4a4a;
 }
@@ -257,6 +207,24 @@
     position: absolute;
     right: 0;
     bottom: 2.5px;
+}
+.condition .price2:before{
+    content: "";
+    width: 0;
+    border: 5px solid transparent;
+    position: absolute;
+    right: 0;
+    bottom: 2.5px;
+    border-top-color: #ffc210;
+}
+.condition .price2:after{
+    content: "";
+    width: 0;
+    border: 5px solid transparent;
+    position: absolute;
+    right: 0;
+    top: 2.5px;
+    border-bottom-color: #d8d8d8;
 }
 .condition .price:after{
     content: "";
@@ -283,14 +251,14 @@
     overflow: hidden;
     cursor:pointer;
 }
+.course-link{
+  overflow: hidden;
+}
 .course-cover {
     width: 423px;
     height: 210px;
     margin-right: 30px;
     float: left;
-}
-.course-cover img{
-  width: 100%;
 }
 .course-info{
     width: 597px;
@@ -414,5 +382,9 @@
     background: #ffc210;
     border: 1px solid #ffc210;
     cursor: pointer;
+}
+.pagination{
+  text-align: center;
+  margin: 20px 0px 50px 0px;
 }
 </style>

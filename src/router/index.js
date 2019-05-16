@@ -6,6 +6,7 @@ import Cart from '@/components/Cart'
 import Detail from "@/components/Detail"
 import Login from "@/components/login"
 import Register from "../components/Register"
+import Player from "../components/Player"
 
 Vue.use(Router)
 
@@ -41,7 +42,12 @@ export default new Router({
       name:"Register",
       path: "/register",
       component:Register,
-    }
+    },
+          {
+       name:"Player",
+       path:"/player",
+       component: Player,
+     },
 
   ]
 })
