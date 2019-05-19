@@ -18,7 +18,7 @@
             <el-row v-if="token">
               <el-col class="cart-ico" :span="9">
                 <router-link to="">
-                  <b class="goods-number">0</b>
+                  <b class="goods-number">{{$store.state.cart.count}}</b>
                   <img class="cart-icon" src="@/assets/cart.svg" alt="">
                   <span><router-link to="/cart">购物车</router-link></span>
                 </router-link>
@@ -89,11 +89,11 @@
       check(link) {
         return link == window.location.pathname
       },
-      logout(){
+      logout() {
 
         this.token = false;
-        this.user_id=false;
-        this.user_name=false;
+        this.user_id = false;
+        this.user_name = false;
 
         sessionStorage.removeItem("token");
         sessionStorage.removeItem("user_id");
@@ -102,9 +102,12 @@
         localStorage.removeItem("token");
         localStorage.removeItem("user_id");
         localStorage.removeItem("user_name");
-
+        let _this = this;
         this.$alert('退出登录成功!', '路飞学城', {
-          confirmButtonText: '确定'
+          confirmButtonText: '确定',
+          callback() {
+            _this.$router.push("/");
+          }
         });
       }
     }

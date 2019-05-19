@@ -6,32 +6,34 @@
           <h3>我的购物车 <span> 共2门课程</span></h3>
         </div>
         <div class="cart-info">
-          <el-table :data="courseData" style="width:100%">
-            <el-table-column type="selection" label="" width="87"></el-table-column>
+          <el-table
+            :data="courseData"
+            style="width:100%"
+            ref="multipleTable"
+          >
+            <el-table-column type="selection" width="87"></el-table-column>
             <el-table-column label="课程" width="540">
               <template slot-scope="scope">
                 <div class="course-box">
-                  <img :src="scope.row.img" alt="">
-                  {{scope.row.title}}
+                  <img :src="$settings.Host + scope.row.course_img" alt="">
+                  {{scope.row.name}}
                 </div>
               </template>
             </el-table-column>
             <el-table-column label="有效期" width="216">
               <template slot-scope="scope">
-                <el-form ref="form" label-width="60px">
-                  <el-form-item>
-                    <el-select v-model="expire" placeholder="请选择有效期">
-                      <el-option v-for="item in expire_list" :key="item.id" :label="item.title" :value="item.id"></el-option>
-                    </el-select>
-                  </el-form-item>
-                </el-form>
+                <el-select v-model="scope.row.expire" placeholder="请选择">
+                  <el-option v-for="item in expire_list" :key="item.id" :label="item.title" :value="item.id"></el-option>
+                </el-select>
               </template>
             </el-table-column>
             <el-table-column label="单价" width="162">
-              <template slot-scope="scope">¥{{ scope.row.price }}</template>
+              <template slot-scope="scope">¥{{ scope.row.price.toFixed(2) }}</template>
             </el-table-column>
             <el-table-column label="操作" width="162">
-              <a href="">删除</a>
+              <template slot-scope="scope">
+                <a @click="CartDel(scope.row.id,scope.row.name)">删除</a>
+              </template>
             </el-table-column>
           </el-table>
         </div>
@@ -60,18 +62,66 @@ export default {
             {title:"一个月有效",id:1},
             {title:"两个月有效",id:2},
             {title:"三个月有效",id:3},
-            {title:"永久有效",id:4},
+            {title:"永久有效",id:-1},
         ],
-        courseData:[
-          {img:"../../static/course/1544059695.jpeg",title:"课程标题一",expire:"2016",price:"12.00"},
-          {img:"../../static/course/1544059695.jpeg",title:"课程标题一",expire:"2016",price:"12.00"},
-        ]
+        courseData:[{"id":7,"expire":"-1","course_img":"/media/course/1544059695_pYyn2Ad.jpeg","name":"jvm虚拟机","price":320.0,"is_select":true},{"id":5,"expire":"-1","course_img":"/media/course/3_XdhvMXb.png","name":"docker入门","price":666.0,"is_select":true},{"id":3,"expire":"-1","course_img":"/media/course/1.png","name":"django框架","price":1995.0,"is_select":true},{"id":4,"expire":"3","course_img":"/media/course/3.png","name":"Linux项目部署","price":500.0,"is_select":false}]
+      }
+    },
+    mounted(){
+      // 判断是否登录
+      this.token = sessionStorage.token || localStorage.token;
+      if( !this.token ){
+        this.$confirm("对不起,您尚未登录!请登录",'提示').then(() => {
+          this.$router.push("/login");
+        }).catch(()=>{
+          this.$router.go(-1);
+        });
+      }else{
+        // 获取购物车商品数据
+        this.$axios.get(this.$settings.Host+"/cart/course/",{
+          headers:{
+            // 注意下方的空格!!!
+            "Authorization":"jwt " + this.token
+          }
+        }).then(response=>{
+
+          this.courseData = response.data;
+          // 更新在vuex里面的数据
+          this.$store.state.cart.count = response.data.length;
+
+          // 在获取到数据以后,对选中数据设置选中效果
+          setTimeout(()=>{
+            let text_expire_list = [];
+            for(let i=0;i<this.expire_list.length;i++){
+              text_expire_list[this.expire_list[i].id] = this.expire_list[i].title;
+            }
+            console.log(text_expire_list);
+            for(let i = 0;i<this.courseData.length;i++){
+              // 设置选中效果
+              this.$refs.multipleTable.toggleRowSelection(this.courseData[i],this.courseData[i].is_select);
+              // 修改有效期的显示值
+              this.courseData[i].expire = text_expire_list[this.courseData[i].expire];
+            }
+          },0);
+
+        })
+
+      }
+    },
+    methods:{
+      CartDel(course_id,course_name){
+        this.$confirm(`您确定要从购物车删除<<${course_name}>>这个课程么?`,"提示!").then(()=>{
+          this.$message("删除成功!");
+
+        }).catch(()=>{
+          // 取消操作
+
+        });
       }
     },
     components:{Header,Footer}
 }
 </script>
-
 <style scoped>
 .main{
   width: 1200px;
