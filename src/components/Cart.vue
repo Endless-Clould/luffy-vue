@@ -3,7 +3,7 @@
       <Header/>
       <div class="main">
         <div class="cart-title">
-          <h3>我的购物车 <span> 共{{$store.state.cart.count}}门课程</span></h3>
+          <h3>我的购物车 <span> 共2门课程</span></h3>
         </div>
         <div class="cart-info">
           <el-table
@@ -11,20 +11,21 @@
             style="width:100%"
             ref="multipleTable"
             @select="currentSelected"
+            @selection-change="SelectionChange"
           >
             <el-table-column type="selection" width="87"></el-table-column>
             <el-table-column label="课程" width="540">
               <template slot-scope="scope">
                 <div class="course-box">
                   <img :src="$settings.Host + scope.row.course_img" alt="">
-                  {{scope.row.name}}
+                  <router-link :to="'/detail?id='+scope.row.id">{{scope.row.name}}</router-link>
                 </div>
               </template>
             </el-table-column>
             <el-table-column label="有效期" width="216">
               <template slot-scope="scope">
-                  <el-select @change="ChangeExpire(scope.row)" v-model="scope.row.expire" placeholder="请选择">
-                  <el-option v-for="item in expire_list" :key="item.id" :label="item.title" :value="item.id"></el-option>
+                <el-select @change="ChangeExpire(scope.row)" v-model="scope.row.expire" placeholder="请选择">
+                  <el-option v-for="item in scope.row.expire_list" :key="item.timer" :label="item.title" :value="item.timer"></el-option>
                 </el-select>
               </template>
             </el-table-column>
@@ -33,7 +34,7 @@
             </el-table-column>
             <el-table-column label="操作" width="162">
               <template slot-scope="scope">
-                <a @click="CartDel(scope.row.id,scope.row.name)">删除</a>
+                <a @click="CartDel(scope.row,scope.row.name)">删除</a>
               </template>
             </el-table-column>
           </el-table>
@@ -42,7 +43,7 @@
           <div class="select-all"><el-checkbox>全选</el-checkbox></div>
           <div class="delete-any"><img src="../../static/img/ico3.png" alt="">删除</div>
           <div class="cart-bottom-right">
-            <span class="total">总计：¥<span>0.0</span></span>
+            <span class="total">总计：¥<span>{{total_price}}</span></span>
             <span class="go-pay">去结算</span>
           </div>
         </div>
@@ -58,17 +59,25 @@ export default {
     name: "Cart",
     data(){
       return{
-        expire:3,
-        expire_list:[
-            {title:"一个月有效",id:1},
-            {title:"两个月有效",id:2},
-            {title:"三个月有效",id:3},
-            {title:"永久有效",id:-1},
-        ],
-        courseData:[{"id":7,"expire":"-1","course_img":"/media/course/1544059695_pYyn2Ad.jpeg","name":"jvm虚拟机","price":320.0,"is_select":true},{"id":5,"expire":"-1","course_img":"/media/course/3_XdhvMXb.png","name":"docker入门","price":666.0,"is_select":true},{"id":3,"expire":"-1","course_img":"/media/course/1.png","name":"django框架","price":1995.0,"is_select":true},{"id":4,"expire":"3","course_img":"/media/course/3.png","name":"Linux项目部署","price":500.0,"is_select":false}]
+        // 注释掉原来的有效周期测试数据
+        // expire:3,
+        // expire_list:[]
+        courseData:[], // 购物车中的商品信息
+        selection:[],  // 购物车中被勾选的商品信息
+        total_price:0.00,
       }
     },
-    mounted(){
+    watch:{
+      selection(){
+        // 当课程勾选状态发生变化时核算价格
+        this.getTotalPrice();
+      },
+      courseData(){
+        // 当课程数量发生变化时核算价格
+        this.getTotalPrice();
+      },
+    },
+    created(){
       // 判断是否登录
       this.token = sessionStorage.token || localStorage.token;
       if( !this.token ){
@@ -90,36 +99,81 @@ export default {
           // 更新在vuex里面的数据
           this.$store.state.cart.count = response.data.length;
 
-          // 在获取到数据以后,对选中数据设置选中效果
+          // 调整因为ajax数据请求导致勾选状态人没有出现的原因,使用定时器进行延时调用
           setTimeout(()=>{
-            let text_expire_list = [];
-            for(let i=0;i<this.expire_list.length;i++){
-              text_expire_list[this.expire_list[i].id] = this.expire_list[i].title;
-            }
-            console.log(text_expire_list);
-            for(let i = 0;i<this.courseData.length;i++){
-              // 设置选中效果
-              this.$refs.multipleTable.toggleRowSelection(this.courseData[i],this.courseData[i].is_select);
-              // 修改有效期的显示值
-              this.courseData[i].expire = text_expire_list[this.courseData[i].expire];
-            }
-          },0);
+            let expire_data = [];
+            this.courseData.forEach(course=>{
+              course.expire_list.forEach(row=>{
+                expire_data[row.timer] = row.title;
+              });
+            });
 
+            // row 就是字典数据[json]
+            this.courseData.forEach(row => {
+              // 设置商品课程的选中状态
+              if(row.is_select){
+                this.$refs.multipleTable.toggleRowSelection(row);
+              }
+              // 调整有效期选项中数值变成文本内容
+              row.expire = expire_data[row.expire];
+
+            });
+          },0)
+
+        }).catch(error=>{
+          let status = error.response.status;
+          if( status == 401 ){
+            this.token = null;
+            sessionStorage.removeItem("token");
+            localStorage.removeItem("token");
+            let _this = this;
+            this.$alert("您尚未登录或登录超时!请重新登录","警告",{
+              callback(){
+                _this.$router.push("/login");
+              }
+            });
+          }
         })
 
       }
     },
     methods:{
-      CartDel(course_id,course_name){
+      getTotalPrice(){
+        // 核算购物车中所有勾选商品的总价格
+        let total = 0;
+        this.selection.forEach(row=>{
+          total += row.price;
+        });
+        // 保留2个小数位
+        this.total_price = total.toFixed(2);
+      },
+      CartDel(course,course_name){
         this.$confirm(`您确定要从购物车删除<<${course_name}>>这个课程么?`,"提示!").then(()=>{
-          this.$message("删除成功!");
+          let course_id = course.id;
+          // 发送请求
+          this.$axios.delete(this.$settings.Host+"/cart/course/",{
+            params:{
+              course_id:course_id,
+            },
+            headers:{
+              // 注意下方的空格!!!
+              "Authorization":"jwt " + this.token
+            },
+          }).then(response=>{
+            let index = this.courseData.indexOf(course);
+            this.courseData.splice(index,1);
+            this.$message("删除成功!");
+
+          }).catch(error=>{
+            console.log(error.response);
+          });
 
         }).catch(()=>{
           // 取消操作
 
         });
       },
-       currentSelected(selection,row){
+      currentSelected(selection,row){
         // selection 表示所有被勾选的信息
         // row 当前操作的数据
         let is_select = true;
@@ -152,7 +206,8 @@ export default {
       ChangeExpire(course){
         // 获取课程ID和有效期
         let course_id = course.id;
-        let expire    = course.expire
+        let expire    = course.expire;
+
         // 发送patch请求更新有效期
         this.$axios.patch(this.$settings.Host+"/cart/course/",{
           course_id,
@@ -163,9 +218,17 @@ export default {
             "Authorization":"jwt " + this.token
           },
         }).then(response=>{
+          // 更新购买的商品课程的价格
+          course.price = response.data.price;
+          // 重新计算购物车中的商品总价
+          this.getTotalPrice();
           this.$message(response.data.message,"提示");
         });
       },
+      // 获取勾选过的商品课程列表
+      SelectionChange(data){
+        this.selection = data;
+      }
     },
     components:{Header,Footer}
 }
