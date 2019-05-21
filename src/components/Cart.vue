@@ -3,13 +3,14 @@
       <Header/>
       <div class="main">
         <div class="cart-title">
-          <h3>我的购物车 <span> 共2门课程</span></h3>
+          <h3>我的购物车 <span> 共{{$store.state.cart.count}}门课程</span></h3>
         </div>
         <div class="cart-info">
           <el-table
             :data="courseData"
             style="width:100%"
             ref="multipleTable"
+            @select="currentSelected"
           >
             <el-table-column type="selection" width="87"></el-table-column>
             <el-table-column label="课程" width="540">
@@ -22,7 +23,7 @@
             </el-table-column>
             <el-table-column label="有效期" width="216">
               <template slot-scope="scope">
-                <el-select v-model="scope.row.expire" placeholder="请选择">
+                  <el-select @change="ChangeExpire(scope.row)" v-model="scope.row.expire" placeholder="请选择">
                   <el-option v-for="item in expire_list" :key="item.id" :label="item.title" :value="item.id"></el-option>
                 </el-select>
               </template>
@@ -117,7 +118,54 @@ export default {
           // 取消操作
 
         });
-      }
+      },
+       currentSelected(selection,row){
+        // selection 表示所有被勾选的信息
+        // row 当前操作的数据
+        let is_select = true;
+        if( selection.indexOf(row) == -1 ){
+          is_select = false;
+        }
+
+        // 获取当前课程ID
+        let course_id = row.id;
+        // 切换勾选状态
+
+        // 发送请求
+        this.$axios.put(this.$settings.Host+"/cart/course/",{
+          course_id: course_id,
+          is_select: is_select,
+        },{
+          headers:{
+            // 注意下方的空格!!!
+            "Authorization":"jwt " + this.token
+          },
+        }).then(response=>{
+
+          this.$message(response.data.message,"提示");
+        }).catch(error=>{
+
+          console.log(error.response)
+        })
+      },
+      // 更新课程的有效期
+      ChangeExpire(course){
+        // 获取课程ID和有效期
+        let course_id = course.id;
+        let expire    = course.expire
+        // 发送patch请求更新有效期
+        this.$axios.patch(this.$settings.Host+"/cart/course/",{
+          course_id,
+          expire,  // 这里是简写,相当于 expire:expire,
+        },{
+          headers:{
+            // 注意下方的空格!!!
+            "Authorization":"jwt " + this.token
+          },
+        }).then(response=>{
+          this.$message(response.data.message,"提示");
+        });
+      },
     },
     components:{Header,Footer}
 }
